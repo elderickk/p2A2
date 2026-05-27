@@ -22,7 +22,6 @@ public class LanCableEditorWindow : EditorWindow {
     private float wormSpeed = 4.0f;
     private bool wormShowTrail = true;
 
-    [MenuItem("LAN Cable Mania/Control Panel")]
     public static void ShowWindow() {
         GetWindow<LanCableEditorWindow>("LCM Control Panel");
     }

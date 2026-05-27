@@ -6,7 +6,6 @@ using UnityEngine;
 // Editor script that builds the complete LAN Cable Mania scene.
 public static class LanCableManiaBuilder {
 
-    [MenuItem("LAN Cable Mania/Build Scene")]
     public static void BuildScene() {
         AddTagIfMissing("LCMDemo");
         AddTagIfMissing("LCMGrid");

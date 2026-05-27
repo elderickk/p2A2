@@ -6,7 +6,6 @@ using UnityEngine.UIElements;
 // Editor utility to automatically generate the Main Menu hierarchy.
 public static class SimpleMenuGenerator {
 
-    [MenuItem("LAN Cable Mania/Generar Menú Simple")]
     public static void GenerarMenu() {
         if (Object.FindAnyObjectByType<Camera>() == null) {
             GameObject camGO = new GameObject("Main Camera");
