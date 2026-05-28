@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-// Types of cable pieces.
+// [UNCHANGED]
 public enum PieceType {
     STRAIGHT_H,
     STRAIGHT_V,
@@ -12,8 +12,7 @@ public enum PieceType {
     BEND_SW
 }
 
-
-// Port connection directions.
+// [UNCHANGED]
 public enum ConnectionDirection {
     North,
     South,
@@ -22,10 +21,10 @@ public enum ConnectionDirection {
     None
 }
 
-
 // Cable piece component representing a segment on the connection grid.
 public class CablePiece : MonoBehaviour {
 
+    // [UNCHANGED]
     [SerializeField] private PieceType type;
     [SerializeField] private ConnectionDirection portA;
     [SerializeField] private ConnectionDirection portB;
@@ -43,6 +42,12 @@ public class CablePiece : MonoBehaviour {
     public ConnectionDirection PortB => portB;
     public bool HasBeenTraversed => hasBeenTraversed;
 
+    // [NEW - MathUnlock]
+    private bool _locked = false;
+    public bool IsLocked => _locked;
+    public bool IsRouterCell { get; set; }
+
+    // [UNCHANGED]
     public List<Vector3> WorldPathPoints {
         get {
             List<Vector3> pts = new List<Vector3>();
@@ -65,12 +70,14 @@ public class CablePiece : MonoBehaviour {
     private Coroutine rotateCoroutine;
     private Coroutine pulseCoroutine;
 
+    // [UNCHANGED]
     private void Awake() {
         baseScale = transform.localScale;
         targetScale = baseScale;
         StartCoroutine(SquashStretchCoroutine());
     }
 
+    // [UNCHANGED]
     public void Setup(PieceType type, Material material, List<Vector3> localPath) {
         this.type = type;
         this.cableMaterial = material;
@@ -79,6 +86,7 @@ public class CablePiece : MonoBehaviour {
         ResetPorts();
     }
 
+    // [UNCHANGED]
     private void ResetPorts() {
         switch (type) {
             case PieceType.STRAIGHT_H:
@@ -108,6 +116,7 @@ public class CablePiece : MonoBehaviour {
         }
     }
 
+    // [MODIFIED - MathUnlock]
     private void Update() {
         float targetScaleMult = IsHovered ? 1.15f : 1.0f;
         targetScale = baseScale * targetScaleMult;
@@ -119,7 +128,7 @@ public class CablePiece : MonoBehaviour {
         pos.y = 0.025f + hoverOffset;
         transform.position = pos;
 
-        if (cableMaterial != null && !hasBeenTraversed) {
+        if (cableMaterial != null && !hasBeenTraversed && !_locked) {
             Color targetGlow;
             if (IsLockedByWorm) {
                 targetGlow = Color.red * 1.5f;
@@ -134,7 +143,16 @@ public class CablePiece : MonoBehaviour {
     public bool IsGlitching { get; private set; }
     public bool IsLockedByWorm { get; private set; }
 
+    // [MODIFIED - MathUnlock]
     public void RotateCW() {
+        if (_locked) {
+            StartCoroutine(LockedWiggle());
+            if (MathChallengeController.Instance != null && GameManager.Instance != null) {
+                MathChallengeController.Instance.TriggerChallenge(this, GameManager.Instance.CurrentRound);
+            }
+            return;
+        }
+
         if (hasBeenTraversed || IsLockedByWorm) {
             return;
         }
@@ -152,15 +170,18 @@ public class CablePiece : MonoBehaviour {
         ParticleSpawner.SpawnRotationSparks(transform.position, hoverGlowColor);
     }
 
+    // [MODIFIED - MathUnlock]
     public void RotateByWorm() {
         if (IsGlitching || IsLockedByWorm) {
             return;
         }
         IsGlitching = true;
         IsLockedByWorm = true;
+        SetLocked(true);
         StartCoroutine(GlitchAnim());
     }
 
+    // [UNCHANGED]
     private IEnumerator GlitchAnim() {
         const float FLICKER_T = 0.1f;
         const float SQUASH_T  = 0.15f;
@@ -214,6 +235,7 @@ public class CablePiece : MonoBehaviour {
         IsGlitching = false;
     }
 
+    // [UNCHANGED]
     public void RotateInstant(int rotations) {
         for (int i = 0; i < rotations; i++) {
             portA = RotateDirCW(portA);
@@ -222,6 +244,7 @@ public class CablePiece : MonoBehaviour {
         transform.localRotation = Quaternion.Euler(0f, rotations * 90f, 0f);
     }
 
+    // [UNCHANGED]
     private IEnumerator RotateCoroutine(float angle) {
         Quaternion startRot = transform.localRotation;
         Quaternion endRot = startRot * Quaternion.Euler(0f, angle, 0f);
@@ -236,6 +259,7 @@ public class CablePiece : MonoBehaviour {
         transform.localRotation = endRot;
     }
 
+    // [UNCHANGED]
     public static ConnectionDirection RotateDirCW(ConnectionDirection dir) {
         switch (dir) {
             case ConnectionDirection.North: return ConnectionDirection.East;
@@ -246,6 +270,7 @@ public class CablePiece : MonoBehaviour {
         }
     }
 
+    // [UNCHANGED]
     public ConnectionDirection GetExit(ConnectionDirection entry) {
         if (entry == portA) {
             return portB;
@@ -256,6 +281,7 @@ public class CablePiece : MonoBehaviour {
         return ConnectionDirection.None;
     }
 
+    // [UNCHANGED]
     public void SetTraversed() {
         hasBeenTraversed = true;
 
@@ -283,10 +309,12 @@ public class CablePiece : MonoBehaviour {
         }
     }
 
+    // [UNCHANGED]
     public void ShakeOnGameOver() {
         StartCoroutine(GameOverShakeCoroutine());
     }
 
+    // [UNCHANGED]
     private IEnumerator SquashStretchCoroutine() {
         float elapsed = 0f;
         Vector3 targetScaleSquash = new Vector3(baseScale.x * 1.3f, baseScale.y * 0.6f, baseScale.z * 1.3f);
@@ -323,6 +351,7 @@ public class CablePiece : MonoBehaviour {
         transform.localScale = baseScale;
     }
 
+    // [UNCHANGED]
     private IEnumerator PulseEmissionCoroutine(Color pulseColor) {
         if (cableMaterial == null) {
             yield break;
@@ -350,6 +379,7 @@ public class CablePiece : MonoBehaviour {
         cableMaterial.SetColor("_EmissionColor", Color.black);
     }
 
+    // [UNCHANGED]
     private IEnumerator GameOverShakeCoroutine() {
         float duration = 0.3f;
         float elapsed = 0f;
@@ -369,6 +399,7 @@ public class CablePiece : MonoBehaviour {
         transform.localRotation = originalRotation;
     }
 
+    // [UNCHANGED]
     public static Vector3 GetPortLocalPos(ConnectionDirection dir) {
         switch (dir) {
             case ConnectionDirection.North: return new Vector3(0f, 0.026f, 0.5f);
@@ -377,5 +408,85 @@ public class CablePiece : MonoBehaviour {
             case ConnectionDirection.West: return new Vector3(-0.5f, 0.026f, 0f);
             default: return Vector3.zero;
         }
+    }
+
+    // [NEW - MathUnlock]
+    public void SetLocked(bool locked) {
+        _locked = locked;
+        if (locked) {
+            StartCoroutine(LockedVisual());
+        } else {
+            IsLockedByWorm = false;
+            if (cableMaterial != null) {
+                cableMaterial.SetColor("_EmissionColor", Color.black);
+            }
+        }
+    }
+
+    // [NEW - MathUnlock]
+    private IEnumerator LockedVisual() {
+        while (_locked) {
+            float pulse = (Mathf.Sin(Time.time * 6f) + 1f) * 0.5f;
+            if (cableMaterial != null) {
+                cableMaterial.SetColor("_EmissionColor", Color.Lerp(Color.red * 0.5f, Color.red * 2.5f, pulse));
+            }
+            yield return null;
+        }
+        if (cableMaterial != null) {
+            cableMaterial.SetColor("_EmissionColor", Color.black);
+        }
+    }
+
+    // [NEW - MathUnlock]
+    public void PlayUnlockEffect() {
+        StartCoroutine(UnlockAnim());
+    }
+
+    // [NEW - MathUnlock]
+    private IEnumerator UnlockAnim() {
+        if (cableMaterial != null) {
+            cableMaterial.SetColor("_EmissionColor", Color.white * 5f);
+        }
+        yield return new WaitForSeconds(0.05f);
+        if (cableMaterial != null) {
+            cableMaterial.SetColor("_EmissionColor", Color.cyan * 3f);
+        }
+
+        float t = 0f;
+        const float GROW_T = 0.1f;
+        Vector3 orig = transform.localScale;
+        while (t < GROW_T) {
+            float s = Mathf.Lerp(1f, 1.3f, t / GROW_T);
+            transform.localScale = orig * s;
+            t += Time.deltaTime;
+            yield return null;
+        }
+
+        t = 0f;
+        const float SHRINK_T = 0.15f;
+        while (t < SHRINK_T) {
+            float s = Mathf.Lerp(1.3f, 1f, t / SHRINK_T);
+            transform.localScale = orig * s;
+            t += Time.deltaTime;
+            yield return null;
+        }
+
+        transform.localScale = orig;
+        if (cableMaterial != null) {
+            cableMaterial.SetColor("_EmissionColor", Color.black);
+        }
+    }
+
+    // [NEW - MathUnlock]
+    private IEnumerator LockedWiggle() {
+        const float WIGGLE_T = 0.06f;
+        Vector3 orig = transform.localPosition;
+        transform.localPosition = orig + new Vector3(0.08f, 0f, 0f);
+        yield return new WaitForSeconds(WIGGLE_T);
+        transform.localPosition = orig + new Vector3(-0.08f, 0f, 0f);
+        yield return new WaitForSeconds(WIGGLE_T);
+        transform.localPosition = orig + new Vector3(0.04f, 0f, 0f);
+        yield return new WaitForSeconds(WIGGLE_T);
+        transform.localPosition = orig;
     }
 }

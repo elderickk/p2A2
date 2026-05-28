@@ -22,6 +22,10 @@ public class LanCableEditorWindow : EditorWindow {
     private float wormSpeed = 4.0f;
     private bool wormShowTrail = true;
 
+    private float challengeTimeout = 15f;
+    private int penaltyRotations = 1;
+    private bool regenerateOnWrong = true;
+
     public static void ShowWindow() {
         GetWindow<LanCableEditorWindow>("LCM Control Panel");
     }
@@ -48,6 +52,10 @@ public class LanCableEditorWindow : EditorWindow {
         wormMinInterval = EditorPrefs.GetFloat("LCM_WormMinInterval", 2.0f);
         wormSpeed = EditorPrefs.GetFloat("LCM_WormSpeed", 4.0f);
         wormShowTrail = EditorPrefs.GetBool("LCM_WormShowTrail", true);
+
+        challengeTimeout = EditorPrefs.GetFloat("LCM_ChallengeTimeout", 15.0f);
+        penaltyRotations = EditorPrefs.GetInt("LCM_PenaltyRotations", 1);
+        regenerateOnWrong = EditorPrefs.GetBool("LCM_RegenerateOnWrong", true);
     }
 
     private void SaveSettings() {
@@ -68,6 +76,10 @@ public class LanCableEditorWindow : EditorWindow {
         EditorPrefs.SetFloat("LCM_WormMinInterval", wormMinInterval);
         EditorPrefs.SetFloat("LCM_WormSpeed", wormSpeed);
         EditorPrefs.SetBool("LCM_WormShowTrail", wormShowTrail);
+
+        EditorPrefs.SetFloat("LCM_ChallengeTimeout", challengeTimeout);
+        EditorPrefs.SetInt("LCM_PenaltyRotations", penaltyRotations);
+        EditorPrefs.SetBool("LCM_RegenerateOnWrong", regenerateOnWrong);
     }
 
     private void OnGUI() {
@@ -112,6 +124,12 @@ public class LanCableEditorWindow : EditorWindow {
         wormMinInterval = EditorGUILayout.Slider("Min Interval", wormMinInterval, 1.0f, 3.0f);
         wormSpeed = EditorGUILayout.Slider("Worm Speed", wormSpeed, 2.0f, 6.0f);
         wormShowTrail = EditorGUILayout.Toggle("Show Trail", wormShowTrail);
+
+        GUILayout.Space(10);
+        GUILayout.Label("── Math Challenge ──", EditorStyles.boldLabel);
+        challengeTimeout = EditorGUILayout.Slider("Challenge Timeout", challengeTimeout, 8.0f, 30.0f);
+        penaltyRotations = EditorGUILayout.IntSlider("Penalty Rotations", penaltyRotations, 1, 3);
+        regenerateOnWrong = EditorGUILayout.Toggle("Regenerate on Wrong", regenerateOnWrong);
 
         if (EditorGUI.EndChangeCheck()) {
             SaveSettings();
@@ -158,6 +176,12 @@ public class LanCableEditorWindow : EditorWindow {
                 WormController.Instance.MinInterval = wormMinInterval;
                 WormController.Instance.WormSpeed = wormSpeed;
                 WormController.Instance.ShowTrail = wormShowTrail;
+            }
+
+            if (MathChallengeController.Instance != null) {
+                MathChallengeController.Instance.ChallengeTimeout = challengeTimeout;
+                MathChallengeController.Instance.PenaltyRotations = penaltyRotations;
+                MathChallengeController.Instance.RegenerateOnWrong = regenerateOnWrong;
             }
         }
     }

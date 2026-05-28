@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 // Worm antagonist controller — state machine + dynamic tube mesh.
@@ -304,6 +305,20 @@ public class WormController : MonoBehaviour {
         _wormMesh.triangles = triangles.ToArray();
         _wormMesh.RecalculateNormals();
         _wormMesh.RecalculateBounds();
+    }
+
+    // [NEW - MathUnlock]
+    public void PunishWrongAnswer() {
+        if (GridManager.Instance == null) {
+            return;
+        }
+        var candidates = GridManager.Instance.AllTiles
+            .Where(t => t != null && !t.IsLocked && !t.IsRouterCell).ToList();
+        if (candidates.Count == 0) {
+            return;
+        }
+        var target = candidates[Random.Range(0, candidates.Count)];
+        target.RotateByWorm();
     }
 }
 

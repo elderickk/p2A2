@@ -66,6 +66,11 @@ public static class LanCableManiaBuilder {
         uiOverlayGO.tag = "LCMDemo";
         Undo.RegisterCreatedObjectUndo(uiOverlayGO, "Create UIOverlay");
 
+        GameObject mathChallengeGO = new GameObject("MathChallenge");
+        MathChallengeController mathChallenge = mathChallengeGO.AddComponent<MathChallengeController>();
+        mathChallengeGO.tag = "LCMDemo";
+        Undo.RegisterCreatedObjectUndo(mathChallengeGO, "Create MathChallenge");
+
         SerializedObject soGM = new SerializedObject(gameManager);
 
         float signalSpeed = EditorPrefs.GetFloat("LCM_SignalSpeed", 1.0f);
@@ -101,6 +106,12 @@ public static class LanCableManiaBuilder {
         soWorm.FindProperty("wormSpeed").floatValue = EditorPrefs.GetFloat("LCM_WormSpeed", 4.0f);
         soWorm.FindProperty("showTrail").boolValue = EditorPrefs.GetBool("LCM_WormShowTrail", true);
         soWorm.ApplyModifiedProperties();
+
+        SerializedObject soMath = new SerializedObject(mathChallenge);
+        soMath.FindProperty("challengeTimeout").floatValue = EditorPrefs.GetFloat("LCM_ChallengeTimeout", 15.0f);
+        soMath.FindProperty("penaltyRotations").intValue = EditorPrefs.GetInt("LCM_PenaltyRotations", 1);
+        soMath.FindProperty("regenerateOnWrong").boolValue = EditorPrefs.GetBool("LCM_RegenerateOnWrong", true);
+        soMath.ApplyModifiedProperties();
 
         SerializedObject soGrid = new SerializedObject(gridManager);
         soGrid.FindProperty("curveStrength").floatValue = curveStrength;

@@ -78,6 +78,7 @@ public class GameManager : MonoBehaviour {
     public float RoundTransitionAlpha => roundTransitionAlpha;
 
     private WormController _worm;
+    private MathChallengeController _math;
 
     private void Awake() {
         if (Instance == null) {
@@ -92,6 +93,11 @@ public class GameManager : MonoBehaviour {
         _worm = GetComponent<WormController>();
         if (_worm == null) {
             _worm = FindAnyObjectByType<WormController>();
+        }
+
+        _math = GetComponent<MathChallengeController>();
+        if (_math == null) {
+            _math = FindAnyObjectByType<MathChallengeController>();
         }
 
         if (enableRoundProgression) {

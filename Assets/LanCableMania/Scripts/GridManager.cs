@@ -387,6 +387,10 @@ public class GridManager : MonoBehaviour {
                 CablePiece piece = cableGO.AddComponent<CablePiece>();
                 piece.Setup(type, mat, localPoints);
 
+                if (x == gridSize - 2 && z == gridSize / 2) {
+                    piece.IsRouterCell = true;
+                }
+
                 int rotations = Random.Range(0, 4);
                 piece.RotateInstant(rotations);
 
@@ -452,6 +456,7 @@ public class GridManager : MonoBehaviour {
 
         CablePiece piece = cableGO.AddComponent<CablePiece>();
         piece.Setup(PieceType.STRAIGHT_H, mat, localPoints);
+        piece.IsRouterCell = true;
 
         cellGrid[x, z].occupied = true;
         cellGrid[x, z].piece = piece;
@@ -501,6 +506,19 @@ public class GridManager : MonoBehaviour {
             for (int z = 0; z < gridSize; z++) {
                 if (cellGrid[x, z].occupied && cellGrid[x, z].piece != null) {
                     cellGrid[x, z].piece.ShakeOnGameOver();
+                }
+            }
+        }
+    }
+
+    // [NEW - MathUnlock]
+    public IEnumerable<CablePiece> AllTiles {
+        get {
+            for (int x = 0; x < gridSize; x++) {
+                for (int z = 0; z < gridSize; z++) {
+                    if (cellGrid[x, z].piece != null) {
+                        yield return cellGrid[x, z].piece;
+                    }
                 }
             }
         }

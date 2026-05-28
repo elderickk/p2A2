@@ -306,4 +306,54 @@ public static class ParticleSpawner {
 
         Object.Destroy(go, 0.6f);
     }
+
+    // [NEW - MathUnlock]
+    public static void EmitSolve(Vector3 pos) {
+        GameObject go = new GameObject("SolveBurst");
+        go.tag = "LCMGrid";
+        ParticleSystem ps = go.AddComponent<ParticleSystem>();
+        
+        var main = ps.main;
+        main.duration = 0.6f;
+        main.loop = false;
+        main.startLifetime = 0.6f;
+        main.startSpeed = new ParticleSystem.MinMaxCurve(1f, 3f);
+        main.startSize = new ParticleSystem.MinMaxCurve(0.05f, 0.12f);
+        main.gravityModifier = -0.2f; // float upward
+        main.playOnAwake = false;
+
+        var emission = ps.emission;
+        emission.enabled = false;
+
+        var shape = ps.shape;
+        shape.enabled = true;
+        shape.shapeType = ParticleSystemShapeType.Sphere;
+        shape.radius = 0.1f;
+
+        var col = ps.colorOverLifetime;
+        col.enabled = true;
+        Gradient g = new Gradient();
+        g.SetKeys(
+            new GradientColorKey[] {
+                new GradientColorKey(Color.cyan, 0f),
+                new GradientColorKey(Color.white, 0.3f)
+            },
+            new GradientAlphaKey[] {
+                new GradientAlphaKey(1f, 0f),
+                new GradientAlphaKey(0f, 1f)
+            }
+        );
+        col.color = new ParticleSystem.MinMaxGradient(g);
+
+        var renderer = go.GetComponent<ParticleSystemRenderer>();
+        renderer.material = GetParticleMaterial();
+
+        go.transform.position = pos;
+        ps.Play();
+
+        // Emit 25 particles in a single burst
+        ps.Emit(25);
+
+        Object.Destroy(go, 0.7f);
+    }
 }

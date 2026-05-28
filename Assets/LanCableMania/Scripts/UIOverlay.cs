@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using UnityEngine;
 
-// Renders the HUD and wrong connection screen flashes using IMGUI.
+// [UNCHANGED]
 public class UIOverlay : MonoBehaviour {
 
     public static UIOverlay Instance { get; private set; }
@@ -37,6 +37,18 @@ public class UIOverlay : MonoBehaviour {
 
     private float _warnAlpha = 0f;
 
+    // [NEW - MathUnlock]
+    private Texture2D _mathBgTex, _correctTex, _wrongTex;
+    private float _resultAlpha;
+    private bool _resultCorrect;
+    private int _resultAnswer;
+
+    private GUIStyle _mathQuestionStyle;
+    private GUIStyle _mathInputStyle;
+    private GUIStyle _mathTimerStyle;
+    private GUIStyle _resultStyle;
+
+    // [UNCHANGED]
     private void Awake() {
         if (Instance == null) {
             Instance = this;
@@ -46,6 +58,7 @@ public class UIOverlay : MonoBehaviour {
         }
     }
 
+    // [MODIFIED - MathUnlock]
     private void Start() {
         mainCamera = Camera.main;
 
@@ -55,6 +68,14 @@ public class UIOverlay : MonoBehaviour {
         _barBgTex = MakeTex(new Color(0.05f, 0.05f, 0.08f, 0.8f));
         _speedBarTex = MakeTex(Color.cyan);
         _warnTex = MakeTex(new Color(0.8f, 0.05f, 0.05f, 1f));
+
+        // Math challenge textures
+        _mathBgTex = MakeTex(new Color(0.04f, 0.04f, 0.08f, 0.92f));
+        _correctTex = MakeTex(new Color(0.05f, 0.4f, 0.05f, 0.85f));
+        _wrongTex = MakeTex(new Color(0.4f, 0.04f, 0.04f, 0.85f));
+        _resultAlpha = 0f;
+        _resultCorrect = false;
+        _resultAnswer = 0;
 
         _bigStyle = new GUIStyle();
         _bigStyle.fontSize = 28;
@@ -91,8 +112,33 @@ public class UIOverlay : MonoBehaviour {
         _dotStyle.fontStyle = FontStyle.Normal;
         _dotStyle.normal.textColor = Color.white;
         _dotStyle.alignment = TextAnchor.MiddleCenter;
+
+        // Math styles
+        _mathQuestionStyle = new GUIStyle();
+        _mathQuestionStyle.fontSize = 38;
+        _mathQuestionStyle.fontStyle = FontStyle.Bold;
+        _mathQuestionStyle.normal.textColor = Color.white;
+        _mathQuestionStyle.alignment = TextAnchor.MiddleCenter;
+
+        _mathInputStyle = new GUIStyle();
+        _mathInputStyle.fontSize = 32;
+        _mathInputStyle.fontStyle = FontStyle.Normal;
+        _mathInputStyle.normal.textColor = Color.cyan;
+        _mathInputStyle.alignment = TextAnchor.MiddleCenter;
+
+        _mathTimerStyle = new GUIStyle();
+        _mathTimerStyle.fontSize = 16;
+        _mathTimerStyle.fontStyle = FontStyle.Normal;
+        _mathTimerStyle.normal.textColor = Color.gray;
+        _mathTimerStyle.alignment = TextAnchor.MiddleCenter;
+
+        _resultStyle = new GUIStyle();
+        _resultStyle.fontSize = 30;
+        _resultStyle.fontStyle = FontStyle.Bold;
+        _resultStyle.alignment = TextAnchor.MiddleCenter;
     }
 
+    // [UNCHANGED]
     private Texture2D MakeTex(Color c) {
         Texture2D t = new Texture2D(1, 1);
         t.SetPixel(0, 0, c);
@@ -100,6 +146,7 @@ public class UIOverlay : MonoBehaviour {
         return t;
     }
 
+    // [UNCHANGED]
     public void SpawnFloatingText(Vector3 worldPos) {
         if (mainCamera == null) {
             mainCamera = Camera.main;
@@ -134,10 +181,12 @@ public class UIOverlay : MonoBehaviour {
         floatingTexts.Add(ft);
     }
 
+    // [UNCHANGED]
     public void ShowWrongConnectionText() {
         wrongConnectionTimer = 0.8f;
     }
 
+    // [UNCHANGED]
     private void Update() {
         if (wrongConnectionTimer > 0f) {
             wrongConnectionTimer -= Time.deltaTime;
@@ -165,6 +214,7 @@ public class UIOverlay : MonoBehaviour {
         }
     }
 
+    // [MODIFIED - MathUnlock]
     private void OnGUI() {
         if (GameManager.Instance == null) {
             return;
@@ -330,13 +380,73 @@ public class UIOverlay : MonoBehaviour {
             GUI.color = Color.white;
         }
 
+        // ── MATH CHALLENGE PANEL ── [NEW - MathUnlock]
+        if (MathChallengeController.Instance != null && MathChallengeController.Instance.State == MathChallengeController.ChallengeState.Active) {
+            float px = sw / 2f - 210f;
+            float py = sh / 2f - 110f;
+            GUI.DrawTexture(new Rect(px, py, 420f, 220f), _mathBgTex);
+
+            GUI.Label(new Rect(px, py + 8f, 420f, 28f), "⚠  EL GUSANO BLOQUEÓ UN NODO", _mathTimerStyle);
+
+            GUI.Label(new Rect(px, py + 45f, 420f, 60f), MathChallengeController.Instance.questionText, _mathQuestionStyle);
+
+            string display = MathChallengeController.Instance.inputBuffer;
+            string cursor = (Mathf.Sin(Time.time * 4f) > 0f) ? "|" : " ";
+            GUI.Label(new Rect(px, py + 110f, 420f, 50f), display + cursor, _mathInputStyle);
+
+            float ratio = MathChallengeController.Instance.timeLeft / MathChallengeController.Instance.challengeTimeoutVal;
+            ratio = Mathf.Clamp01(ratio);
+            Color barCol = Color.Lerp(Color.red, Color.green, ratio);
+
+            GUI.DrawTexture(new Rect(px + 10f, py + 170f, 400f, 12f), _mathBgTex);
+
+            if (_speedBarTex != null) {
+                _speedBarTex.SetPixel(0, 0, barCol);
+                _speedBarTex.Apply();
+                GUI.DrawTexture(new Rect(px + 10f, py + 170f, 400f * ratio, 12f), _speedBarTex);
+            }
+
+            GUI.Label(new Rect(px, py + 188f, 420f, 22f), "[0-9] Type  |  [Enter] Submit  |  [Backspace] Delete", _mathTimerStyle);
+        }
+
+        // ── RESULT FLASH ── [NEW - MathUnlock]
+        if (_resultAlpha > 0f) {
+            Texture2D tex = _resultCorrect ? _correctTex : _wrongTex;
+            GUI.color = new Color(1f, 1f, 1f, _resultAlpha);
+            GUI.DrawTexture(new Rect(sw / 2f - 180f, sh / 2f - 40f, 360f, 80f), tex);
+            string msg = _resultCorrect ? "✓  CORRECTO" : "✗  INCORRECTO — Era: " + _resultAnswer;
+            _resultStyle.normal.textColor = _resultCorrect ? Color.green : Color.red;
+            GUI.Label(new Rect(sw / 2f - 180f, sh / 2f - 40f, 360f, 80f), msg, _resultStyle);
+            GUI.color = Color.white;
+        }
+
+        // ── LOCKED TILE INDICATOR ── [NEW - MathUnlock]
+        if (GridManager.Instance != null) {
+            foreach (CablePiece tile in GridManager.Instance.AllTiles) {
+                if (tile != null && tile.IsLocked) {
+                    Vector3 wp = tile.transform.position + Vector3.up * 0.5f;
+                    Vector3 sp = Camera.main.WorldToScreenPoint(wp);
+                    if (sp.z > 0f) {
+                        float gx = sp.x - 12f;
+                        float gy = sh - sp.y - 12f;
+                        float pulse = (Mathf.Sin(Time.time * 6f) + 1f) * 0.5f;
+                        GUI.color = new Color(1f, 0.2f, 0.2f, 0.6f + pulse * 0.4f);
+                        GUI.Label(new Rect(gx, gy, 24f, 24f), "🔒", _mathTimerStyle);
+                        GUI.color = Color.white;
+                    }
+                }
+            }
+        }
+
         GUI.color = Color.white;
     }
 
+    // [UNCHANGED]
     public void ShowWarning(float duration) {
         StartCoroutine(CorruptionFlash(duration));
     }
 
+    // [UNCHANGED]
     private IEnumerator CorruptionFlash(float duration) {
         float t = 0f;
         while (t < duration * 0.3f) {
@@ -351,5 +461,29 @@ public class UIOverlay : MonoBehaviour {
             yield return null;
         }
         _warnAlpha = 0f;
+    }
+
+    // [NEW - MathUnlock]
+    public void ShowMathResult(bool correct, int answer) {
+        _resultCorrect = correct;
+        _resultAnswer = answer;
+        StartCoroutine(ResultFlash());
+    }
+
+    // [NEW - MathUnlock]
+    private IEnumerator ResultFlash() {
+        float t = 0f;
+        while (t < 0.2f) {
+            _resultAlpha = Mathf.Lerp(0f, 1f, t / 0.2f);
+            t += Time.deltaTime;
+            yield return null;
+        }
+        t = 0f;
+        while (t < 0.6f) {
+            _resultAlpha = Mathf.Lerp(1f, 0f, t / 0.6f);
+            t += Time.deltaTime;
+            yield return null;
+        }
+        _resultAlpha = 0f;
     }
 }
