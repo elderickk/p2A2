@@ -26,6 +26,7 @@ public class LanCableEditorWindow : EditorWindow {
     private int penaltyRotations = 1;
     private bool regenerateOnWrong = true;
 
+    [MenuItem("Window/LCM Control Panel")]
     public static void ShowWindow() {
         GetWindow<LanCableEditorWindow>("LCM Control Panel");
     }
