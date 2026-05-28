@@ -99,6 +99,10 @@ public class GameManager : MonoBehaviour {
         if (_math == null) {
             _math = FindAnyObjectByType<MathChallengeController>();
         }
+        if (_math == null) {
+            GameObject mathChallengeGO = new GameObject("MathChallenge");
+            _math = mathChallengeGO.AddComponent<MathChallengeController>();
+        }
 
         if (enableRoundProgression) {
             currentRound = startingRound;
