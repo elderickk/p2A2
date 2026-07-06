@@ -25,6 +25,7 @@ public static class ParticleSpawner {
         GameObject go = new GameObject("CableSparks");
         go.tag = "LCMGrid";
         ParticleSystem ps = go.AddComponent<ParticleSystem>();
+        ps.Stop(); // Stop to allow modifying main module parameters without warnings
 
         var main = ps.main;
         main.duration = 0.6f;
@@ -76,6 +77,7 @@ public static class ParticleSpawner {
         GameObject go = new GameObject("Explosion");
         go.tag = "LCMGrid";
         ParticleSystem ps = go.AddComponent<ParticleSystem>();
+        ps.Stop(); // Stop to allow modifying main module parameters without warnings
 
         var main = ps.main;
         main.duration = 1.2f;
@@ -125,6 +127,7 @@ public static class ParticleSpawner {
         GameObject go = new GameObject("RotationSparks");
         go.tag = "LCMGrid";
         ParticleSystem ps = go.AddComponent<ParticleSystem>();
+        ps.Stop(); // Stop to allow modifying main module parameters without warnings
 
         var main = ps.main;
         main.duration = 0.25f;
@@ -192,6 +195,7 @@ public static class ParticleSpawner {
             go.tag = "LCMGrid";
             go.transform.position = corners[i];
             ParticleSystem ps = go.AddComponent<ParticleSystem>();
+            ps.Stop(); // Stop to allow modifying main module parameters without warnings
 
             var main = ps.main;
             main.duration = 1.5f;
@@ -238,6 +242,7 @@ public static class ParticleSpawner {
             GameObject go = new GameObject("WormTrail");
             go.tag = "LCMGrid";
             _wormTrailPS = go.AddComponent<ParticleSystem>();
+            _wormTrailPS.Stop(); // Stop to allow modifying main module parameters without warnings
 
             var main = _wormTrailPS.main;
             main.startLifetime = 0.35f;
@@ -270,6 +275,7 @@ public static class ParticleSpawner {
         GameObject go = new GameObject("GlitchBurst");
         go.tag = "LCMGrid";
         ParticleSystem ps = go.AddComponent<ParticleSystem>();
+        ps.Stop(); // Stop to allow modifying main module parameters without warnings
 
         var main = ps.main;
         main.duration = 0.6f;
@@ -312,6 +318,7 @@ public static class ParticleSpawner {
         GameObject go = new GameObject("SolveBurst");
         go.tag = "LCMGrid";
         ParticleSystem ps = go.AddComponent<ParticleSystem>();
+        ps.Stop(); // Stop to allow modifying main module parameters without warnings
         
         var main = ps.main;
         main.duration = 0.6f;

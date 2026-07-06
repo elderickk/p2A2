@@ -8,7 +8,7 @@ public class MathChallengeController : MonoBehaviour {
     public static MathChallengeController Instance { get; private set; }
 
     public enum ChallengeState { Inactive, Active, Correct, Wrong }
-    public enum ChallengeType { Addition, Subtraction, Multiplication, ModuloBasic }
+    public enum ChallengeType { Addition, Subtraction, Multiplication, ModuloBasic, Division }
 
     [SerializeField] private float challengeTimeout = 15f;
     [SerializeField] private int penaltyRotations = 1;
@@ -21,8 +21,10 @@ public class MathChallengeController : MonoBehaviour {
     private float _timeLeft;
     private int _correctAnswer;
     private string _questionText;
+    private ChallengeType _currentType;
 
     public ChallengeState State => state;
+    public ChallengeType CurrentType => _currentType;
     public CablePiece TargetTile => targetTile;
     public string questionText => _questionText;
     public string inputBuffer => _inputBuffer;
@@ -68,6 +70,7 @@ public class MathChallengeController : MonoBehaviour {
 
     // [NEW - MathUnlock]
     public void TriggerChallenge(CablePiece tile, int level) {
+        Debug.Log($"[LCM] Math challenge triggered for level {level}. State: {state}");
         if (state == ChallengeState.Active) {
             return;
         }
@@ -85,20 +88,24 @@ public class MathChallengeController : MonoBehaviour {
         int maxVal = 10;
         List<ChallengeType> allowed = new List<ChallengeType> { ChallengeType.Addition, ChallengeType.Subtraction };
 
-        if (level >= 3) {
-            maxVal = 12;
+        if (level >= 2) {
+            maxVal = 10;
             allowed.Add(ChallengeType.Multiplication);
+            allowed.Add(ChallengeType.Division);
+        }
+        if (level >= 4) {
+            maxVal = 12;
         }
         if (level >= 5) {
             maxVal = 20;
             allowed.Add(ChallengeType.ModuloBasic);
         }
 
-        ChallengeType type = allowed[Random.Range(0, allowed.Count)];
+        _currentType = allowed[Random.Range(0, allowed.Count)];
         int op1 = Random.Range(1, maxVal + 1);
         int op2 = Random.Range(1, maxVal + 1);
 
-        switch (type) {
+        switch (_currentType) {
             case ChallengeType.Addition:
                 _questionText = $"{op1} + {op2} = ?";
                 _correctAnswer = op1 + op2;
@@ -116,10 +123,17 @@ public class MathChallengeController : MonoBehaviour {
                 _questionText = $"{op1} × {op2} = ?";
                 _correctAnswer = op1 * op2;
                 break;
+            case ChallengeType.Division:
+                int divisor = Random.Range(2, maxVal + 1);
+                int quotient = Random.Range(1, maxVal + 1);
+                int dividend = divisor * quotient;
+                _questionText = $"{dividend} ÷ {divisor} = ?";
+                _correctAnswer = quotient;
+                break;
             case ChallengeType.ModuloBasic:
-                int divisor = Random.Range(2, Mathf.Min(6, op1));
-                _questionText = $"{op1} mod {divisor} = ?";
-                _correctAnswer = op1 % divisor;
+                int divisorMod = Random.Range(2, Mathf.Min(6, op1));
+                _questionText = $"{op1} mod {divisorMod} = ?";
+                _correctAnswer = op1 % divisorMod;
                 break;
         }
     }
@@ -158,6 +172,27 @@ public class MathChallengeController : MonoBehaviour {
         if (UIOverlay.Instance != null) {
             UIOverlay.Instance.ShowMathResult(true, _correctAnswer);
         }
+
+        // Unlock achievements via AchievementManager
+        float timeTaken = challengeTimeout - _timeLeft;
+        if (AchievementManager.Instance != null) {
+            AchievementManager.Instance.UnlockAchievement("math_first_unlock");
+
+            if (timeTaken <= 3.5f) {
+                AchievementManager.Instance.UnlockAchievement("math_speed_unlock");
+            }
+
+            if (_currentType == ChallengeType.Multiplication) {
+                AchievementManager.Instance.UnlockAchievement("math_mult_unlock");
+            } else if (_currentType == ChallengeType.Division) {
+                AchievementManager.Instance.UnlockAchievement("math_div_unlock");
+            } else if (_currentType == ChallengeType.ModuloBasic) {
+                AchievementManager.Instance.UnlockAchievement("math_mod_unlock");
+            }
+
+            AchievementManager.Instance.IncrementSolvesThisRound();
+        }
+
         StartCoroutine(ResetAfter(0.8f));
     }
 

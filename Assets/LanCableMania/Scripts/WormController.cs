@@ -121,7 +121,14 @@ public class WormController : MonoBehaviour {
                 _mr.enabled = false;
             }
             state = WormState.Idle;
-            float wait = Mathf.Max(minInterval, baseInterval - (currentLevel - 1) * 0.3f);
+            float wait = baseInterval;
+            if (currentLevel == 1) {
+                wait = 12f;
+            } else if (currentLevel == 2) {
+                wait = 9f;
+            } else {
+                wait = Mathf.Max(minInterval, 6.0f - (currentLevel - 3) * 0.4f);
+            }
             yield return new WaitForSeconds(wait);
 
             if (GridManager.Instance == null || !enableWorm) {

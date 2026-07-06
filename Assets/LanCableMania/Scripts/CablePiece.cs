@@ -146,9 +146,12 @@ public class CablePiece : MonoBehaviour {
     // [MODIFIED - MathUnlock]
     public void RotateCW() {
         if (_locked) {
+            Debug.Log($"[LCM] Clicked on locked CablePiece {gameObject.name}. Triggering math challenge.");
             StartCoroutine(LockedWiggle());
             if (MathChallengeController.Instance != null && GameManager.Instance != null) {
                 MathChallengeController.Instance.TriggerChallenge(this, GameManager.Instance.CurrentRound);
+            } else {
+                Debug.LogWarning($"[LCM] Cannot trigger challenge. MathChallengeController.Instance: {MathChallengeController.Instance}, GameManager.Instance: {GameManager.Instance}");
             }
             return;
         }

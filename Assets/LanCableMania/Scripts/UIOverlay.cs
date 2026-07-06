@@ -220,6 +220,10 @@ public class UIOverlay : MonoBehaviour {
             return;
         }
 
+        if (Time.frameCount % 120 == 0) {
+            Debug.Log($"[LCM-UI] OnGUI executing. Screen size: {Screen.width}x{Screen.height}. State: {GameManager.Instance.State}");
+        }
+
         float sw = Screen.width;
         float sh = Screen.height;
 
@@ -382,6 +386,9 @@ public class UIOverlay : MonoBehaviour {
 
         // ── MATH CHALLENGE PANEL ── [NEW - MathUnlock]
         if (MathChallengeController.Instance != null && MathChallengeController.Instance.State == MathChallengeController.ChallengeState.Active) {
+            if (Time.frameCount % 30 == 0) {
+                Debug.Log($"[LCM-UI] Drawing Math Challenge Panel! Question: {MathChallengeController.Instance.questionText}, time: {MathChallengeController.Instance.timeLeft}");
+            }
             float px = sw / 2f - 210f;
             float py = sh / 2f - 110f;
             GUI.DrawTexture(new Rect(px, py, 420f, 220f), _mathBgTex);
@@ -424,15 +431,22 @@ public class UIOverlay : MonoBehaviour {
         if (GridManager.Instance != null) {
             foreach (CablePiece tile in GridManager.Instance.AllTiles) {
                 if (tile != null && tile.IsLocked) {
-                    Vector3 wp = tile.transform.position + Vector3.up * 0.5f;
+                    Vector3 wp = tile.transform.position + Vector3.up * 0.4f;
                     Vector3 sp = Camera.main.WorldToScreenPoint(wp);
                     if (sp.z > 0f) {
-                        float gx = sp.x - 12f;
+                        float gx = sp.x - 25f;
                         float gy = sh - sp.y - 12f;
+                        
+                        GUIStyle boxStyle = new GUIStyle(GUI.skin.box);
+                        boxStyle.normal.textColor = Color.white;
+                        boxStyle.fontSize = 10;
+                        boxStyle.fontStyle = FontStyle.Bold;
+                        boxStyle.alignment = TextAnchor.MiddleCenter;
+                        
                         float pulse = (Mathf.Sin(Time.time * 6f) + 1f) * 0.5f;
-                        GUI.color = new Color(1f, 0.2f, 0.2f, 0.6f + pulse * 0.4f);
-                        GUI.Label(new Rect(gx, gy, 24f, 24f), "🔒", _mathTimerStyle);
-                        GUI.color = Color.white;
+                        GUI.backgroundColor = new Color(0.9f, 0.1f, 0.1f, 0.7f + pulse * 0.3f);
+                        GUI.Box(new Rect(gx, gy, 50f, 20f), "LOCKED", boxStyle);
+                        GUI.backgroundColor = Color.white; // Reset background color
                     }
                 }
             }

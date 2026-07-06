@@ -41,11 +41,11 @@ public class GameManager : MonoBehaviour {
     }
 
     private static readonly RoundData[] RoundsTable = new RoundData[] {
-        new RoundData(8, 26.0f, 0.56f),
-        new RoundData(9, 23.0f, 0.7f),
-        new RoundData(10, 20.0f, 0.9f),
-        new RoundData(11, 16.0f, 1.1f),
-        new RoundData(12, 13.0f, 1.4f)
+        new RoundData(8, 45.0f, 0.45f),
+        new RoundData(8, 35.0f, 0.55f),
+        new RoundData(9, 25.0f, 0.75f),
+        new RoundData(10, 20.0f, 0.95f),
+        new RoundData(11, 15.0f, 1.2f)
     };
 
     private GameState state = GameState.WaitingToStart;
@@ -102,6 +102,17 @@ public class GameManager : MonoBehaviour {
         if (_math == null) {
             GameObject mathChallengeGO = new GameObject("MathChallenge");
             _math = mathChallengeGO.AddComponent<MathChallengeController>();
+        }
+
+        if (UIOverlay.Instance == null) {
+            GameObject uiOverlayGO = new GameObject("UIOverlay");
+            uiOverlayGO.AddComponent<UIOverlay>();
+            Debug.Log("[LCM] UIOverlay was missing in scene. Instantiated dynamically.");
+        }
+
+        if (AchievementManager.Instance == null) {
+            GameObject achievementManagerGO = new GameObject("AchievementManager");
+            achievementManagerGO.AddComponent<AchievementManager>();
         }
 
         if (enableRoundProgression) {
@@ -169,6 +180,11 @@ public class GameManager : MonoBehaviour {
 
     public void AdvanceRound() {
         totalScore += roundScore;
+        if (currentRound == 1) {
+            if (AchievementManager.Instance != null) {
+                AchievementManager.Instance.UnlockAchievement("level_2_reach");
+            }
+        }
         currentRound++;
 
         StartCoroutine(RoundClearSequence());
@@ -252,6 +268,9 @@ public class GameManager : MonoBehaviour {
         }
 
         roundScore = 0;
+        if (AchievementManager.Instance != null) {
+            AchievementManager.Instance.ResetSolvesThisRound();
+        }
         fuseTimer = fuseDelay;
         state = GameState.PlacingCables;
         if (_worm != null) {

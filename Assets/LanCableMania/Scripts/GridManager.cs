@@ -128,15 +128,22 @@ public class GridManager : MonoBehaviour {
             }
         }
 
-        if (Input.GetMouseButtonDown(0) && GameManager.Instance.State == GameManager.GameState.PlacingCables) {
-            if (Physics.Raycast(ray, out RaycastHit hit)) {
-                for (int x = 0; x < gridSize; x++) {
-                    for (int z = 0; z < gridSize; z++) {
-                        if (cellObjects[x, z] == hit.collider.gameObject) {
-                            RotateCableAt(x, z);
-                            return;
+        if (Input.GetMouseButtonDown(0)) {
+            Debug.Log($"[LCM-Click] Mouse click. Game State: {GameManager.Instance.State}");
+            if (GameManager.Instance.State == GameManager.GameState.PlacingCables) {
+                if (Physics.Raycast(ray, out RaycastHit hit)) {
+                    Debug.Log($"[LCM-Click] Raycast hit GameObject: {hit.collider.gameObject.name}");
+                    for (int x = 0; x < gridSize; x++) {
+                        for (int z = 0; z < gridSize; z++) {
+                            if (cellObjects[x, z] == hit.collider.gameObject) {
+                                Debug.Log($"[LCM-Click] Match grid cell at ({x}, {z}). Rotating...");
+                                RotateCableAt(x, z);
+                                return;
+                            }
                         }
                     }
+                } else {
+                    Debug.Log("[LCM-Click] Raycast hit nothing.");
                 }
             }
         }
