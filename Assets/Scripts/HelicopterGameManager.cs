@@ -67,9 +67,17 @@ public class HelicopterGameManager : MonoBehaviour
             {
                 float speed = rb.velocity.magnitude * 3.6f; // m/s a km/h
                 float altitude = helicopter.transform.position.y;
+                float rpmPercent = helicopter.RotorRpmPercent * 100f;
+                float thresholdPercent = helicopter.LiftThreshold * 100f;
+                string status = rpmPercent >= thresholdPercent ? "DESPEGUE/ASCENSO" : "INSUFICIENTE (PRESIONA ARROW UP)";
 
                 if (speedText != null) speedText.text = $"Velocidad: {speed:F1} km/h";
                 if (altitudeText != null) altitudeText.text = $"Altitud: {altitude:F1} m";
+                
+                if (scoreText != null)
+                {
+                    scoreText.text = $"Puntos: {score} | Anillos: {ringsCollected}/{totalRings}\nAspas: {rpmPercent:F0}% (Umbral: {thresholdPercent:F0}%) [{status}]";
+                }
             }
         }
 

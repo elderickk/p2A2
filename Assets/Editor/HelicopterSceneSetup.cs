@@ -93,8 +93,8 @@ public class HelicopterSceneSetup : EditorWindow
         heliRoot.transform.position = new Vector3(0f, 1f, 0f);
         Rigidbody rb = heliRoot.AddComponent<Rigidbody>();
         rb.mass = 1.2f;
-        rb.drag = 0.6f;
-        rb.angularDrag = 2.5f;
+        rb.linearDamping = 0.6f;
+        rb.angularDamping = 2.5f;
 
         BoxCollider boxCol = heliRoot.AddComponent<BoxCollider>();
         boxCol.center = new Vector3(0f, 0.2f, 0f);
@@ -282,7 +282,15 @@ public class HelicopterSceneSetup : EditorWindow
         canvasObj.AddComponent<GraphicRaycaster>();
 
         Font defaultFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        if (defaultFont == null) defaultFont = Font.GetDefault();
+        if (defaultFont == null)
+        {
+            defaultFont = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        }
+        if (defaultFont == null)
+        {
+            Font[] fonts = Resources.FindObjectsOfTypeAll<Font>();
+            if (fonts.Length > 0) defaultFont = fonts[0];
+        }
 
         // Fondo oscuro superior para UI (Panel)
         GameObject headerPanel = new GameObject("HeaderPanel");
@@ -294,23 +302,25 @@ public class HelicopterSceneSetup : EditorWindow
         panelRect.anchorMax = new Vector2(1f, 1f);
         panelRect.pivot = new Vector2(0.5f, 1f);
         panelRect.anchoredPosition = new Vector3(0f, 0f, 0f);
-        panelRect.sizeDelta = new Vector2(0f, 60f);
+        panelRect.sizeDelta = new Vector2(0f, 85f);
 
         // Texto de Puntaje
         GameObject scoreTextObj = new GameObject("ScoreText");
         scoreTextObj.transform.SetParent(headerPanel.transform, false);
         Text scoreText = scoreTextObj.AddComponent<Text>();
         scoreText.font = defaultFont;
-        scoreText.fontSize = 20;
+        scoreText.fontSize = 18;
         scoreText.color = Color.white;
-        scoreText.text = "Puntos: 0 | Anillos: 0/7";
+        scoreText.text = "Puntos: 0 | Anillos: 0/7\nAspas: 0% (Umbral: 75%) [INSUFICIENTE]";
         scoreText.alignment = TextAnchor.MiddleLeft;
+        scoreText.horizontalOverflow = HorizontalWrapMode.Overflow;
+        scoreText.verticalOverflow = VerticalWrapMode.Overflow;
         RectTransform scoreRect = scoreText.GetComponent<RectTransform>();
         scoreRect.anchorMin = new Vector2(0f, 0.5f);
         scoreRect.anchorMax = new Vector2(0.4f, 0.5f);
         scoreRect.pivot = new Vector2(0f, 0.5f);
         scoreRect.anchoredPosition = new Vector2(20f, 0f);
-        scoreRect.sizeDelta = new Vector2(0f, 40f);
+        scoreRect.sizeDelta = new Vector2(0f, 65f);
 
         // Texto de Altitud
         GameObject altitudeTextObj = new GameObject("AltitudeText");
@@ -367,7 +377,9 @@ public class HelicopterSceneSetup : EditorWindow
         controlsText.font = defaultFont;
         controlsText.fontSize = 14;
         controlsText.color = new Color(0.8f, 0.8f, 0.8f);
-        controlsText.text = "Controles:\n• W / S: Cabeceo (Avanzar/Retroceder)\n• A / D: Giro (Guiñada)\n• Espacio: Subir\n• Left Shift: Bajar\n• R: Reiniciar";
+        controlsText.text = "Controles:\n• Flecha Arriba (Up Arrow): Mantener para acelerar aspas y despegar\n• W / S: Avanzar / Retroceder (Cabeceo)\n• A / D: Girar Izquierda / Derecha (Guiñada)\n• R: Reiniciar";
+        controlsText.horizontalOverflow = HorizontalWrapMode.Overflow;
+        controlsText.verticalOverflow = VerticalWrapMode.Overflow;
         controlsText.alignment = TextAnchor.LowerLeft;
         RectTransform controlsRect = controlsText.GetComponent<RectTransform>();
         controlsRect.anchorMin = new Vector2(0f, 0f);

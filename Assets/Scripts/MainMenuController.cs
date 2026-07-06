@@ -8,7 +8,7 @@ public class MainMenuController : MonoBehaviour {
 
     [Header("Configuración de Escena")]
     [Tooltip("Nombre de la escena que se cargará al pulsar 'New Game'.")]
-    [SerializeField] private string targetSceneName = "SampleScene";
+    [SerializeField] private string targetSceneName = "HelicopterPlayground";
 
     [Header("Identificadores de UI (UI Builder)")]
     [Tooltip("El nombre (Name / ID) que le diste al botón de jugar en el UI Builder.")]

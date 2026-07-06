@@ -15,7 +15,7 @@ public class HelicopterLandingPad : MonoBehaviour
             if (rb != null)
             {
                 // Si la velocidad es muy baja (está quieto)
-                if (rb.velocity.magnitude < 0.2f)
+                if (rb.linearVelocity.magnitude < 0.2f)
                 {
                     stopTimer += Time.deltaTime;
                     if (stopTimer >= REQUIRE_STOP_DURATION)

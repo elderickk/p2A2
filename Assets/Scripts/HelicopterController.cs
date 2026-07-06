@@ -3,17 +3,19 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))]
 public class HelicopterController : MonoBehaviour
 {
-    [Header("Motor y Sustentación (Elevación)")]
-    [Tooltip("Fuerza ascendente máxima aplicada al helicóptero.")]
-    [SerializeField] private float maxLiftForce = 15f;
-    [Tooltip("Velocidad a la que se asciende o desciende.")]
-    [SerializeField] private float climbSpeed = 5f;
-    [Tooltip("Amortiguación vertical para simular resistencia del aire y estabilizar el hover.")]
-    [SerializeField] private float verticalDamping = 2f;
+    [Header("Motor y Sustentación (Up Arrow)")]
+    [Tooltip("Fuerza ascendente aplicada al helicóptero cuando las palas superan el umbral.")]
+    [SerializeField] private float liftForce = 18f;
+    [Tooltip("Umbral de velocidad de rotación de las palas para empezar a elevarse (0.0 a 1.0).")]
+    [SerializeField] private float liftThreshold = 0.75f;
+    [Tooltip("Velocidad de aceleración del rotor.")]
+    [SerializeField] private float rotorAcceleration = 0.5f;
+    [Tooltip("Velocidad de desaceleración del rotor al soltar la tecla.")]
+    [SerializeField] private float rotorDeceleration = 0.4f;
 
     [Header("Movimiento Horizontal (WASD)")]
     [Tooltip("Velocidad de avance y retroceso (W/S).")]
-    [SerializeField] private float forwardSpeed = 8f;
+    [SerializeField] private float forwardSpeed = 10f;
     [Tooltip("Velocidad de giro (A/D) sobre el eje vertical.")]
     [SerializeField] private float turnSpeed = 90f;
     [Tooltip("Amortiguación de arrastre horizontal.")]
@@ -35,17 +37,20 @@ public class HelicopterController : MonoBehaviour
     [Tooltip("Objeto que representa las palas del rotor de cola.")]
     [SerializeField] private Transform tailRotor;
     [Tooltip("Velocidad de rotación máxima del rotor principal.")]
-    [SerializeField] private float mainRotorSpeed = 1000f;
+    [SerializeField] private float mainRotorSpeed = 1200f;
     [Tooltip("Velocidad de rotación máxima del rotor de cola.")]
-    [SerializeField] private float tailRotorSpeed = 1500f;
+    [SerializeField] private float tailRotorSpeed = 1600f;
 
     private Rigidbody rb;
-    private float currentThrustInput = 0f;
     private float currentForwardInput = 0f;
     private float currentTurnInput = 0f;
     
-    // Velocidad actual del rotor (0 a 1) para un despegue/apagado suave
-    private float rotorRpmPercent = 1f;
+    // Velocidad actual del rotor (0 a 1)
+    private float rotorRpmPercent = 0f;
+
+    // Propiedades públicas para lectura desde la UI u otros scripts
+    public float RotorRpmPercent => rotorRpmPercent;
+    public float LiftThreshold => liftThreshold;
 
     private void Start()
     {
@@ -56,6 +61,9 @@ public class HelicopterController : MonoBehaviour
         rb.drag = 0.5f;
         rb.angularDrag = 2.0f;
         rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+        
+        // Empezar con el rotor apagado
+        rotorRpmPercent = 0f;
     }
 
     private void Update()
@@ -67,25 +75,18 @@ public class HelicopterController : MonoBehaviour
         // A/D para girar (Yaw)
         currentTurnInput = Input.GetAxis("Horizontal"); // A = -1, D = 1
 
-        // Espacio para subir, Shift izquierdo para bajar
-        if (Input.GetKey(KeyCode.Space))
+        // Flecha Arriba (Up Arrow) aumenta la velocidad de las aspas progresivamente
+        if (Input.GetKey(KeyCode.UpArrow))
         {
-            currentThrustInput = 1f;
-        }
-        else if (Input.GetKey(KeyCode.LeftShift))
-        {
-            currentThrustInput = -1f;
+            rotorRpmPercent = Mathf.MoveTowards(rotorRpmPercent, 1f, Time.deltaTime * rotorAcceleration);
         }
         else
         {
-            currentThrustInput = 0f;
+            // Al soltar la tecla, disminuye progresivamente la velocidad
+            rotorRpmPercent = Mathf.MoveTowards(rotorRpmPercent, 0f, Time.deltaTime * rotorDeceleration);
         }
 
-        // Q/E alternativos para subir/bajar
-        if (Input.GetKey(KeyCode.E)) currentThrustInput = 1f;
-        if (Input.GetKey(KeyCode.Q)) currentThrustInput = -1f;
-
-        // 2. Animar Rotores
+        // 2. Animar Rotores basados en las RPM actuales
         RotateRotors();
 
         // 3. Inclinar Visualmente el Helicóptero
@@ -94,69 +95,62 @@ public class HelicopterController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        // 1. Aplicar Fuerza de Sustentación (Vertical)
-        // Calculamos la fuerza necesaria para flotar (hover) contrarrestando la gravedad
-        float hoverForce = rb.mass * Physics.gravity.magnitude;
-        float verticalForce = hoverForce;
+        // 1. Lógica de despegue y elevación en Y
+        // Si el rotor supera el umbral de velocidad, se eleva
+        if (rotorRpmPercent > liftThreshold)
+        {
+            // Fuerza para contrarrestar la gravedad + fuerza extra de ascenso
+            float hoverForce = rb.mass * Physics.gravity.magnitude;
+            
+            // La fuerza de elevación escala con las RPM por encima del umbral
+            float excessPercent = (rotorRpmPercent - liftThreshold) / (1f - liftThreshold);
+            float appliedLift = hoverForce + (liftForce * excessPercent);
 
-        if (currentThrustInput > 0.1f)
-        {
-            // Subir
-            verticalForce += currentThrustInput * maxLiftForce;
-        }
-        else if (currentThrustInput < -0.1f)
-        {
-            // Bajar
-            verticalForce += currentThrustInput * maxLiftForce * 0.7f;
+            rb.AddForce(Vector3.up * appliedLift, ForceMode.Force);
         }
         else
         {
-            // Hover estable: Amortiguar velocidad vertical para evitar rebotes
-            float localVerticalVelocity = transform.InverseTransformDirection(rb.velocity).y;
-            verticalForce -= localVerticalVelocity * verticalDamping * rb.mass;
+            // Si el rotor está por debajo del umbral, no se aplica sustentación activa (cae por gravedad)
         }
 
-        // Aplicamos la sustentación en la dirección 'Up' local del helicóptero (para que se deslice si está inclinado)
-        rb.AddForce(transform.up * verticalForce, ForceMode.Force);
-
-        // 2. Aplicar Movimiento de Avance/Retroceso (W/S)
-        Vector3 forwardDir = transform.forward;
-        // Evitamos que empuje hacia abajo si el helicóptero está inclinado
-        forwardDir.y = 0f;
-        forwardDir.Normalize();
-
-        if (Mathf.Abs(currentForwardInput) > 0.1f)
+        // 2. Aplicar Movimiento de Avance/Retroceso (W/S) con WASD
+        // Solo nos movemos horizontalmente si tenemos cierta sustentación del rotor
+        if (rotorRpmPercent > 0.3f && Mathf.Abs(currentForwardInput) > 0.1f)
         {
-            rb.AddForce(forwardDir * (currentForwardInput * forwardSpeed * rb.mass), ForceMode.Force);
+            Vector3 forwardDir = transform.forward;
+            forwardDir.y = 0f;
+            forwardDir.Normalize();
+
+            // La fuerza de empuje horizontal es proporcional a las RPM del rotor
+            float forceMultiplier = rotorRpmPercent; 
+            rb.AddForce(forwardDir * (currentForwardInput * forwardSpeed * forceMultiplier * rb.mass), ForceMode.Force);
         }
         else
         {
-            // Amortiguar velocidad horizontal si no hay input para detenerse gradualmente
+            // Amortiguar velocidad horizontal si no hay input
             Vector3 localVel = transform.InverseTransformDirection(rb.velocity);
             localVel.z -= localVel.z * horizontalDamping * Time.fixedDeltaTime;
             rb.velocity = transform.TransformDirection(localVel);
         }
 
         // 3. Aplicar Rotación / Giro (A/D)
-        if (Mathf.Abs(currentTurnInput) > 0.05f)
+        // Solo podemos girar si el rotor está girando (tiene potencia)
+        if (rotorRpmPercent > 0.15f && Mathf.Abs(currentTurnInput) > 0.05f)
         {
-            float yawForce = currentTurnInput * turnSpeed * Time.fixedDeltaTime;
+            float yawForce = currentTurnInput * turnSpeed * rotorRpmPercent * Time.fixedDeltaTime;
             rb.MoveRotation(rb.rotation * Quaternion.Euler(0f, yawForce, 0f));
         }
     }
 
     private void RotateRotors()
     {
-        // Rampa suave para simular encendido
-        rotorRpmPercent = Mathf.MoveTowards(rotorRpmPercent, 1f, Time.deltaTime * 0.5f);
-
         // Rotar rotor principal (alrededor de su eje Y local)
         if (mainRotor != null)
         {
             mainRotor.Rotate(Vector3.up * (mainRotorSpeed * rotorRpmPercent * Time.deltaTime), Space.Self);
         }
 
-        // Rotar rotor de cola (alrededor de su eje X o Z local)
+        // Rotar rotor de cola (alrededor de su eje X local)
         if (tailRotor != null)
         {
             tailRotor.Rotate(Vector3.right * (tailRotorSpeed * rotorRpmPercent * Time.deltaTime), Space.Self);
@@ -173,7 +167,14 @@ public class HelicopterController : MonoBehaviour
         // Inclinación lateral (Roll) en base al giro (Yaw)
         float targetRoll = -currentTurnInput * maxVisualRoll;
 
-        // Interpolación suave del modelo visual (hijo) independiente del Rigidbody físico
+        // Limitar inclinación si no estamos volando
+        if (rotorRpmPercent < liftThreshold)
+        {
+            targetPitch *= (rotorRpmPercent / liftThreshold);
+            targetRoll *= (rotorRpmPercent / liftThreshold);
+        }
+
+        // Interpolación suave del modelo visual
         Quaternion targetRotation = Quaternion.Euler(targetPitch, 0f, targetRoll);
         visualModel.localRotation = Quaternion.Slerp(visualModel.localRotation, targetRotation, Time.deltaTime * tiltSmoothSpeed);
     }
