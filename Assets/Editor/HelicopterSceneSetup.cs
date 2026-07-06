@@ -10,6 +10,29 @@ public class HelicopterSceneSetup : EditorWindow
     [MenuItem("Tools/Helicopter Game/Setup Game Scene")]
     public static void SetupScene()
     {
+        // 0. Limpiar la escena de menú anterior (menu.unity) para evitar traslape visual
+        try
+        {
+            Scene menuScene = EditorSceneManager.OpenScene("Assets/Scenes/menu.unity", OpenSceneMode.Single);
+            GameObject[] menuObjects = menuScene.GetRootGameObjects();
+            foreach (var obj in menuObjects)
+            {
+                string nameLower = obj.name.ToLower();
+                if (nameLower != "main camera" && 
+                    nameLower != "directional light" && 
+                    nameLower != "menu_principal" && 
+                    !nameLower.Contains("eventsystem"))
+                {
+                    DestroyImmediate(obj);
+                }
+            }
+            EditorSceneManager.SaveScene(menuScene);
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning("No se pudo limpiar la escena de menú automáticamente: " + ex.Message);
+        }
+
         // 1. Crear una nueva escena vacía
         Scene newScene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
         newScene.name = "HelicopterPlayground";
