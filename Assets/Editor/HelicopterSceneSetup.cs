@@ -403,6 +403,12 @@ public class HelicopterSceneSetup : EditorWindow
         // 10. Guardar la Escena
         EditorSceneManager.SaveScene(newScene, "Assets/Scenes/HelicopterPlayground.unity");
         Debug.Log("¡Escena 'HelicopterPlayground' creada y configurada con éxito en Assets/Scenes!");
+
+        // 11. Configurar automáticamente las escenas en Build Settings
+        EditorBuildSettingsScene[] buildScenes = new EditorBuildSettingsScene[2];
+        buildScenes[0] = new EditorBuildSettingsScene("Assets/Scenes/menu.unity", true);
+        buildScenes[1] = new EditorBuildSettingsScene("Assets/Scenes/HelicopterPlayground.unity", true);
+        EditorBuildSettings.scenes = buildScenes;
     }
 }
 #endif

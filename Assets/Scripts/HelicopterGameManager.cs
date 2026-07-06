@@ -65,7 +65,7 @@ public class HelicopterGameManager : MonoBehaviour
             Rigidbody rb = helicopter.GetComponent<Rigidbody>();
             if (rb != null)
             {
-                float speed = rb.velocity.magnitude * 3.6f; // m/s a km/h
+                float speed = rb.linearVelocity.magnitude * 3.6f; // m/s a km/h
                 float altitude = helicopter.transform.position.y;
                 float rpmPercent = helicopter.RotorRpmPercent * 100f;
                 float thresholdPercent = helicopter.LiftThreshold * 100f;

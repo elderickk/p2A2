@@ -58,8 +58,8 @@ public class HelicopterController : MonoBehaviour
         
         // Configuraciones del Rigidbody para vuelo físico estable
         rb.useGravity = true;
-        rb.drag = 0.5f;
-        rb.angularDrag = 2.0f;
+        rb.linearDamping = 0.5f;
+        rb.angularDamping = 2.0f;
         rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
         
         // Empezar con el rotor apagado
@@ -128,9 +128,9 @@ public class HelicopterController : MonoBehaviour
         else
         {
             // Amortiguar velocidad horizontal si no hay input
-            Vector3 localVel = transform.InverseTransformDirection(rb.velocity);
+            Vector3 localVel = transform.InverseTransformDirection(rb.linearVelocity);
             localVel.z -= localVel.z * horizontalDamping * Time.fixedDeltaTime;
-            rb.velocity = transform.TransformDirection(localVel);
+            rb.linearVelocity = transform.TransformDirection(localVel);
         }
 
         // 3. Aplicar Rotación / Giro (A/D)
