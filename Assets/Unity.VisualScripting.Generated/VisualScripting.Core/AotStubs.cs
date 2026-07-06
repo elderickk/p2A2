@@ -1,1 +1,0 @@
-// Temporary visual scripting stub
