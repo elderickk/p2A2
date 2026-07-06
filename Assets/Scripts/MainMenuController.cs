@@ -21,6 +21,8 @@ public class MainMenuController : MonoBehaviour {
     }
 
     private void Start() {
+        targetSceneName = "HelicopterPlayground";
+        
         if (uiDocument == null) {
             uiDocument = GetComponent<UIDocument>();
         }
